@@ -1,0 +1,6 @@
+outright
+  outright-db => db
+  outright-db => db2
+
+outright-nginx
+  outright => app
