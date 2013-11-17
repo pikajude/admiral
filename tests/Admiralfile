@@ -1,6 +1,14 @@
-outright
-  outright-db => db
-  outright-db => db2
+web1, web2, web3, web4
+  source myapp/web
+  depends db
+  has redis
 
-outright-nginx
-  outright => app
+db
+  source myapp/db
+
+redis
+  source myapp/redis
+
+nginx
+  source myapp/nginx
+  has web1, web2, web3, web4

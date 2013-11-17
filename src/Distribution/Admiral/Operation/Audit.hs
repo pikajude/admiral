@@ -1,3 +1,9 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Distribution.Admiral.Operation.Audit where
 
-audit = undefined
+import Data.Monoid
+import Data.Text (unpack)
+import Distribution.Admiral.Operation.Class
+
+audit = error "oh"

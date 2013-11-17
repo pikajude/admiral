@@ -8,13 +8,11 @@ module Distribution.Admiral.Error (
   , AdmiralError(..)
   , MissingAdmiralFile(..)
   , CyclicDependencies(..)
-  , DuplicateAliases(..)
-  , DuplicateDependencies(..)
 ) where
 
 import Control.Exception
 import Data.List
-import Data.Text (Text, unpack)
+import Data.Text (unpack)
 import Data.Typeable
 import Distribution.Admiral.Parser
 import System.IO
@@ -44,39 +42,14 @@ instance Exception MissingAdmiralFile where
     toException = admiralErrorToException
     fromException = admiralErrorFromException
 
-data CyclicDependencies = CyclicDependencies [Image] deriving Typeable
+data CyclicDependencies = CyclicDependencies [Ship] deriving Typeable
 
 instance Show CyclicDependencies where
     show (CyclicDependencies ns) =
             "Cyclical dependencies! "
-         ++ intercalate " <=> " (map (unpack . imageName) ns)
+         ++ intercalate " <=> " (map (unpack . shipAlias) ns)
 
 instance Exception CyclicDependencies where
-    toException = admiralErrorToException
-    fromException = admiralErrorFromException
-
-data DuplicateAliases = DuplicateAliases Text [[(Text,Text)]] deriving Typeable
-
-instance Show DuplicateAliases where
-    show (DuplicateAliases a ns) = "Duplicate aliases on "
-                                ++ unpack a ++ "!\n  "
-                                ++ intercalate "\n  " (map display ns)
-        where display xs = intercalate ", " (map (unpack . fst) xs)
-                        ++ " => " ++ unpack (snd $ head xs)
-
-instance Exception DuplicateAliases where
-    toException = admiralErrorToException
-    fromException = admiralErrorFromException
-
-data DuplicateDependencies = DuplicateDependencies Text [Text] deriving Typeable
-
-instance Show DuplicateDependencies where
-    show (DuplicateDependencies a ns) = unpack a
-                                     ++ " expects multiple instances of "
-                                     ++ intercalate ", " (map unpack ns)
-                                     ++ ".\nUse --allow-duplicates if you really want to do this."
-
-instance Exception DuplicateDependencies where
     toException = admiralErrorToException
     fromException = admiralErrorFromException
 

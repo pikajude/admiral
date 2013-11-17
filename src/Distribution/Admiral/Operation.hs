@@ -1,16 +1,25 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TupleSections #-}
 
 module Distribution.Admiral.Operation (
     runOperation
   , ensureAcyclic
 ) where
 
+import Control.Arrow
+import Control.Lens hiding (children)
 import Control.Monad.Reader
+import Data.ByteString.Lazy.Char8 (fromStrict)
 import Data.Function
 import Data.Graph
+import Data.Digest.Pure.MD5
 import Data.List
-import Data.Text (pack)
+import qualified Data.Map as M
+import Data.Text.Encoding
+import Data.Text.Lens
+import Data.Text (Text, pack)
 import Distribution.Admiral.Error
 import Distribution.Admiral.Parser
 import Distribution.Admiral.Options
@@ -35,43 +44,15 @@ runOperation opts = do
     case desc of
         Failure xs -> print xs
         Success m -> do
-            let deduped = deduplicate m
-                sccs = stronglyConnComp $ map (\c@(Image n _ deps) -> (c, n, map fst deps)) deduped
-                nodes = ensureUniqueDeps (allowDuplicates opts) . ensureUniqueAliases $ ensureAcyclic sccs
-            runReaderT oper $ Env nodes
+            let sccs = ensureAcyclic . stronglyConnComp
+                     $ map (\s -> (s, shipAlias s, map dependencySource $ shipDeps s)) m
+            print sccs
+            runReaderT oper $ Env undefined
 
-deduplicate :: [Image] -> [Image]
-deduplicate is = go groups
-    where groups = groupBy ((==) `on` imageName) is
-          number ims@(Image n _ _:_) = reverse $
-              zipWith (\num img -> img { imageNameOverride = Just $ n <> pack (show num) })
-                      ([0..] :: [Integer])
-                      ims
-          number [] = error "impossibru!"
-          go (x:xs) = if length x > 1
-                          then number x ++ go xs
-                          else x ++ go xs
-          go [] = []
+hashText :: Text -> Text
+hashText = pack . show . md5 . fromStrict . encodeUtf8
 
-ensureAcyclic :: [SCC Image] -> [Image]
+ensureAcyclic :: [SCC Ship] -> [Ship]
 ensureAcyclic (AcyclicSCC n:ns) = n:ensureAcyclic ns
 ensureAcyclic (CyclicSCC ns:_) = throw $ CyclicDependencies ns
 ensureAcyclic [] = []
-
-ensureUniqueAliases :: [Image] -> [Image]
-ensureUniqueAliases (i@(Image x _ ys):is) =
-    if all ((== 1) . length) groups
-        then i:ensureUniqueAliases is
-        else throw $ DuplicateAliases x (filter ((> 1) . length) groups)
-    where groups = groupBy ((==) `on` snd) ys
-ensureUniqueAliases [] = []
-
-ensureUniqueDeps :: Bool -> [Image] -> [Image]
-ensureUniqueDeps _ [] = []
-ensureUniqueDeps True x = x
-ensureUniqueDeps False (i@(Image n _ ds):xs) =
-    if all ((== 1) . length) groups
-        then i:ensureUniqueDeps False xs
-        else throw $ DuplicateDependencies n
-                (map (fst . head) $ filter ((> 1) . length) groups)
-    where groups = groupBy ((==) `on` fst) ds

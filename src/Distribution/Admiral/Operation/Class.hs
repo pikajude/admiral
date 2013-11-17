@@ -1,16 +1,23 @@
 module Distribution.Admiral.Operation.Class (
     module Control.Monad.Reader
+  , module Data.Tree
   , Env(..)
+  , Image(..)
+  , Dependency(..)
   , AdmiralOp
-  , eachDependency
+  , bottomUp, topDown
 ) where
 
 import Control.Monad.Reader
+import Data.Tree
 import Distribution.Admiral.Parser
 
-data Env = Env { imageList :: [Image] } deriving Show
+data Env = Env { images :: Tree Image } deriving Show
 
 type AdmiralOp = ReaderT Env IO
 
-eachDependency :: (Image -> AdmiralOp ()) -> AdmiralOp ()
-eachDependency f = asks imageList >>= mapM_ f
+bottomUp :: (Image -> AdmiralOp ()) -> AdmiralOp ()
+bottomUp f = asks images >>= mapM_ f . reverse . flatten
+
+topDown :: (Image -> AdmiralOp ()) -> AdmiralOp ()
+topDown f = asks images >>= mapM_ f . flatten

@@ -5,7 +5,7 @@ module Distribution.Admiral.Options (
   , module Options.Applicative
 ) where
 
-import Options.Applicative
+import Options.Applicative hiding ((&))
 
 data Options = Options
              { admiralFile :: FilePath

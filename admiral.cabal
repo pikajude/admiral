@@ -22,9 +22,12 @@ executable admiral
   -- other-extensions:    
   build-depends:       base >=4.6 && <4.7
                      , ansi-terminal
+                     , bytestring
                      , containers
                      , directory
+                     , lens
                      , mtl
+                     , pureMD5
                      , optparse-applicative
                      , text
                      , trifecta
