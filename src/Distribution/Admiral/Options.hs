@@ -9,7 +9,6 @@ import Options.Applicative hiding ((&))
 
 data Options = Options
              { admiralFile :: FilePath
-             , allowDuplicates :: Bool
              , subOptions :: SubOptions
              } deriving Show
 
@@ -22,9 +21,6 @@ commands = Options
             <> help "Use FILE instead of ./Admiralfile"
             <> value "./Admiralfile"
             <> completer (bashCompleter "file") )
-       <*> flag False True
-             ( long "allow-duplicates"
-            <> help "Allow one image to depend on multiple versions of another" )
        <*> subparser
             ( command "sail" (info sailOptions
                 $ progDesc "Build and deploy fleet")
@@ -32,14 +28,14 @@ commands = Options
                 $ progDesc "Stop all containers in a fleet")
            <> command "sink" (info sinkOptions
                 $ progDesc "Stop and destroy all containers in a fleet")
-           <> command "audit" (info auditOptions
-                $ progDesc "Print information about running and non-running containers in a fleet")
-            )
+           <> command "graph" (info graphOptions
+                $ progDesc "Show the Admiralfile's dependency graph")
+           )
 
 data SubOptions = SailOptions
                 | SinkOptions
                 | DockOptions
-                | AuditOptions
+                | GraphOptions
                 deriving Show
 
 sailOptions :: Parser SubOptions
@@ -51,5 +47,5 @@ sinkOptions = pure SinkOptions
 dockOptions :: Parser SubOptions
 dockOptions = pure DockOptions
 
-auditOptions :: Parser SubOptions
-auditOptions = pure AuditOptions
+graphOptions :: Parser SubOptions
+graphOptions = pure GraphOptions

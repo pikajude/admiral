@@ -24,6 +24,8 @@ executable admiral
                      , ansi-terminal
                      , bytestring
                      , containers
+                     , deepseq
+                     , deepseq-th
                      , directory
                      , lens
                      , mtl
@@ -32,4 +34,5 @@ executable admiral
                      , text
                      , trifecta
   hs-source-dirs:      src
+  ghc-options:         -Wall -Werror
   default-language:    Haskell2010

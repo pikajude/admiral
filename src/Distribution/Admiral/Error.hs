@@ -8,13 +8,15 @@ module Distribution.Admiral.Error (
   , AdmiralError(..)
   , MissingAdmiralFile(..)
   , CyclicDependencies(..)
+  , OrphanDependency(..)
+  , UnsourcedShip(..)
 ) where
 
-import Control.Exception
+import Control.Exception hiding (try)
 import Data.List
-import Data.Text (unpack)
+import Data.Text (Text, unpack)
 import Data.Typeable
-import Distribution.Admiral.Parser
+import Distribution.Admiral.Ship
 import System.IO
 import System.Console.ANSI
 
@@ -50,6 +52,25 @@ instance Show CyclicDependencies where
          ++ intercalate " <=> " (map (unpack . shipAlias) ns)
 
 instance Exception CyclicDependencies where
+    toException = admiralErrorToException
+    fromException = admiralErrorFromException
+
+data OrphanDependency = OrphanDependency Text deriving Typeable
+
+instance Show OrphanDependency where
+    show (OrphanDependency d)
+        = "`" ++ unpack d ++ "' was specified as a dependency, but was not found in the Admiralfile."
+
+instance Exception OrphanDependency where
+    toException = admiralErrorToException
+    fromException = admiralErrorFromException
+
+data UnsourcedShip = UnsourcedShip Text deriving Typeable
+
+instance Show UnsourcedShip where
+    show (UnsourcedShip s) = "No source image was specified for the ship `" ++ unpack s ++ "'."
+
+instance Exception UnsourcedShip where
     toException = admiralErrorToException
     fromException = admiralErrorFromException
 

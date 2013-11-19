@@ -1,14 +1,13 @@
 web1, web2, web3, web4
   source myapp/web
-  depends db
-  has redis
+  depends db, redis
 
 db
   source myapp/db
 
 redis
-  source myapp/redis
+  from redis
 
 nginx
   source myapp/nginx
-  has web1, web2, web3, web4
+  depends web1, web2, web3, web4
